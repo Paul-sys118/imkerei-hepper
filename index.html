@@ -228,14 +228,15 @@
   .honig:last-child { border-right: none; }
   .honig .honig-photo {
     display: block;
+    position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    height: 0;
+    padding-bottom: 100%;
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 22px;
     border: 1px solid var(--line);
     background: var(--ivory-warm);
-    padding: 16px;
     cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
@@ -244,8 +245,13 @@
     box-shadow: 0 6px 18px rgba(44, 32, 21, 0.12);
   }
   .honig .honig-photo img {
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: calc(100% - 32px);
+    height: calc(100% - 32px);
     object-fit: contain;
     border-radius: 2px;
     transition: transform 0.2s ease;
