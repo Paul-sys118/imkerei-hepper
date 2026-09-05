@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imkerei Hepper – Honig direkt vom Imker</title>
+<meta name="description" content="Imkerei Hepper – regionaler Honig aus eigener Imkerei. Sorten, Preise und Bestellung.">
+<link rel="icon" href="images/favicon.ico?v=2" sizes="any">
+<link rel="icon" href="images/favicon-32.png?v=2" type="image/png" sizes="32x32">
+<link rel="icon" href="images/favicon-192.png?v=2" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root {
+    --gold: #c47f1e;
+    --gold-deep: #935e14;
+    --bark: #2c2015;
+    --bark-soft: #4a3a28;
+    --ivory: #fbf4e6;
+    --ivory-warm: #f4e9d3;
+    --sage: #6d7a4e;
+    --sage-deep: #4f5a37;
+    --line: rgba(44, 32, 21, 0.14);
+    --max: 1120px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--bark);
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    color: var(--bark);
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  .wrap {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* Header */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(251, 244, 230, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  nav { display: flex; gap: 28px; }
+  nav a {
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--bark-soft);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  nav a:hover { color: var(--gold-deep); border-color: var(--gold-deep); }
+
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--bark);
+    border-radius: 1px;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 96px 0 88px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 4.4vw, 3.5rem);
+    max-width: 12ch;
+  }
+  .hero p.lead {
+    margin-top: 22px;
+    font-size: 1.15rem;
+    color: var(--bark-soft);
+    max-width: 42ch;
+  }
+  .hero-cta {
+    margin-top: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gold);
+    color: var(--ivory);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 14px 26px;
+    border-radius: 3px;
+    transition: background 0.15s ease;
+  }
+  .hero-cta:hover { background: var(--gold-deep); }
+
+  .hero-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 18px 40px rgba(44, 32, 21, 0.18);
+  }
+  .hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Über uns */
+  .about {
+    padding: 90px 0;
+    border-top: 1px solid var(--line);
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 56px;
+    align-items: start;
+  }
+  .about h2 {
+    font-size: 2rem;
+    max-width: 10ch;
+  }
+  .about p {
+    color: var(--bark-soft);
+    max-width: 56ch;
+    margin-top: 18px;
+  }
+  .about-facts {
+    margin-top: 30px;
+    display: flex;
+    gap: 34px;
+    flex-wrap: wrap;
+  }
+  .fact { border-left: 2px solid var(--gold); padding-left: 14px; }
+  .fact strong { display: block; font-family: 'Fraunces', serif; font-size: 1.5rem; }
+  .fact span { color: var(--bark-soft); font-size: 0.92rem; }
+
+  /* Sorten */
+  .sorten {
+    padding: 90px 0 100px;
+    background: var(--ivory-warm);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .sorten h2 { font-size: 2rem; max-width: 14ch; }
+  .sorten > .wrap > p { color: var(--bark-soft); margin-top: 14px; max-width: 56ch; }
+
+  .honig-liste {
+    margin-top: 54px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .honig-liste-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 820px;
+  }
+  .honig {
+    position: relative;
+    padding: 34px 30px;
+    border-right: 1px solid var(--line);
+  }
+  .honig:last-child { border-right: none; }
+  .honig .honig-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    border: 1px solid var(--line);
+    background: var(--ivory-warm);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .honig .honig-photo:hover {
+    border-color: var(--gold-deep);
+    box-shadow: 0 6px 18px rgba(44, 32, 21, 0.12);
+  }
+  .honig .honig-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 2px;
+    transition: transform 0.2s ease;
+  }
+  .honig .honig-photo:hover img {
+    transform: scale(1.03);
+  }
+  .honig h3 { font-size: 1.3rem; }
+  .honig p { color: var(--bark-soft); margin-top: 10px; font-size: 0.97rem; }
+  .honig .preis {
+    margin-top: 20px;
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    color: var(--gold-deep);
+  }
+
+  /* Selbstbedienung */
+  .sb {
+    padding: 90px 0;
+    border-top: 1px solid var(--line);
+  }
+  .sb-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .sb h2 { font-size: 2rem; max-width: 12ch; }
+  .sb-text p { color: var(--bark-soft); margin-top: 16px; max-width: 46ch; }
+  .sb-text p a { color: var(--gold-deep); text-decoration: none; border-bottom: 1px solid var(--gold-deep); }
+  .sb-hint { font-size: 0.92rem; }
+  .sb-photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .sb-photos img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+  }
+
+  /* Karte */
+  .karte {
+    padding: 90px 0;
+    background: var(--ivory-warm);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .karte h2 { font-size: 2rem; max-width: 16ch; }
+  .karte > .wrap > p { color: var(--bark-soft); margin-top: 14px; max-width: 60ch; }
+  #bee-map {
+    margin-top: 40px;
+    height: 440px;
+    width: 100%;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    background: var(--ivory);
+  }
+  .karte-legende {
+    margin-top: 16px;
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--bark-soft);
+  }
+  .karte-legende span { display: inline-flex; align-items: center; gap: 8px; }
+  .karte-legende .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--gold-deep);
+    transform: rotate(-45deg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .karte-legende .dot span { transform: rotate(45deg); }
+  .hive-pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--gold-deep);
+    border: 2px solid var(--ivory);
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+  }
+  .hive-pin .bee-emoji {
+    transform: rotate(45deg);
+    font-size: 15px;
+    line-height: 1;
+  }
+  .pin-wrapper { position: relative; width: 30px; height: 30px; }
+  .pin-wrapper .hive-pin { position: absolute; inset: 0; }
+  .shop-badge {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 17px;
+    height: 17px;
+    background: var(--ivory);
+    border: 1.5px solid var(--gold-deep);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .leaflet-popup-content { font-family: 'Inter', sans-serif; font-size: 0.9rem; }
+  .leaflet-popup-content strong { font-family: 'Fraunces', serif; font-size: 1rem; }
+
+  /* Bewertungen */
+  .bewertungen {
+    padding: 90px 0;
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .bewertungen h2 { font-size: 2rem; text-align: center; }
+  .google-badge {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    color: var(--bark-soft);
+    font-size: 0.95rem;
+  }
+  .google-badge svg { width: 20px; height: 20px; }
+  .reviews-viewport {
+    margin-top: 44px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+  .reviews-track {
+    display: flex;
+    gap: 24px;
+    width: max-content;
+    animation: scroll-reviews 46s linear infinite;
+  }
+  .reviews-track:hover { animation-play-state: paused; }
+  .review-card {
+    flex: 0 0 320px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 26px;
+    box-shadow: 0 4px 16px rgba(44, 32, 21, 0.06);
+  }
+  .review-card .stars { color: #f4b400; letter-spacing: 2px; font-size: 1.05rem; }
+  .review-card p.text {
+    margin-top: 12px;
+    font-size: 0.92rem;
+    color: var(--bark-soft);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .review-card .author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .review-card .author .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--gold);
+    color: var(--ivory);
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+  }
+  .review-card .author strong { display: block; font-size: 0.92rem; }
+  .review-card .author .date { font-size: 0.8rem; color: var(--bark-soft); }
+  .reviews-note {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--bark-soft);
+  }
+  #reviews-status {
+    text-align: center;
+    color: var(--bark-soft);
+    font-size: 0.92rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reviews-track { animation: none; }
+  }
+
+  /* Kontakt */
+  .kontakt { padding: 96px 0 100px; }
+  .kontakt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+  .kontakt h2 { font-size: 2rem; }
+  .kontakt-info { color: var(--bark-soft); }
+  .kontakt-info .addr {
+    margin-top: 24px;
+    font-family: 'Fraunces', serif;
+    font-style: normal;
+    color: var(--bark);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+  .kontakt-info .addr strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+  .kontakt-info .addr a { color: var(--gold-deep); text-decoration: none; border-bottom: 1px solid transparent; }
+  .kontakt-info .addr a:hover { border-bottom-color: var(--gold-deep); }
+  .maps-btn {
+    margin-top: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--sage-deep);
+    color: var(--ivory);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 22px;
+    border-radius: 3px;
+    transition: background 0.15s ease;
+  }
+  .maps-btn:hover { background: var(--sage); }
+  .kontakt-info .note {
+    margin-top: 28px;
+    padding: 16px 18px;
+    background: var(--ivory-warm);
+    border-left: 2px solid var(--sage);
+    font-size: 0.92rem;
+  }
+
+  form { display: flex; flex-direction: column; gap: 16px; }
+  label { font-size: 0.88rem; font-weight: 600; color: var(--bark-soft); }
+  input, textarea, select {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    color: var(--bark);
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  textarea { resize: vertical; min-height: 110px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  button.submit {
+    margin-top: 6px;
+    align-self: flex-start;
+    background: var(--sage-deep);
+    color: var(--ivory);
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 14px 30px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button.submit:hover { background: var(--sage); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 28px 0;
+  }
+  footer .wrap {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.86rem;
+    color: var(--bark-soft);
+  }
+
+  @media (max-width: 820px) {
+    .hero-grid, .about-grid, .kontakt-grid, .sb-grid { grid-template-columns: 1fr; }
+    .sb-photos { grid-template-columns: 1fr 1fr; }
+    .honig-liste { grid-template-columns: 1fr; }
+    .honig { border-right: none; border-bottom: 1px solid var(--line); }
+    .honig:last-child { border-bottom: none; }
+    .header-inner { padding: 16px 24px; }
+    .nav-toggle { display: flex; }
+    nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      gap: 0;
+      background: var(--ivory);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 12px 24px rgba(44, 32, 21, 0.1);
+    }
+    nav.open { display: flex; }
+    nav a {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    nav a:last-child { border-bottom: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">Imkerei Hepper</div>
+    <button class="nav-toggle" aria-label="Menü öffnen" aria-expanded="false" aria-controls="main-nav">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="main-nav">
+      <a href="#ueber-uns">Über uns</a>
+      <a href="#sorten">Unsere Honigsorten</a>
+      <a href="#selbstbedienung">Vor Ort kaufen</a>
+      <a href="#standorte">Unsere Standorte</a>
+      <a href="#bewertungen">Bewertungen</a>
+      <a href="#kontakt">Kontakt &amp; Bestellung</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  var navToggle = document.querySelector('.nav-toggle');
+  var mainNav = document.getElementById('main-nav');
+  navToggle.addEventListener('click', function () {
+    var isOpen = mainNav.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  mainNav.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      mainNav.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+</script>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Honig aus der Region, direkt vom Imker</h1>
+      <p class="lead">Wir betreiben unsere Bienenvölker mit viel Sorgfalt und verkaufen unseren Honig unbehandelt und direkt ab Hof – naturbelassen, ehrlich und aus der Region.</p>
+      <a href="#kontakt" class="hero-cta">Honig anfragen →</a>
+    </div>
+<div class="hero-photo"><img src="images/hero-honigwabe.webp" alt="Echte Honigwabe mit Bienen aus unseren Völkern"></div>
+  </div>
+</section>
+
+<section class="about" id="ueber-uns">
+  <div class="wrap about-grid">
+    <h2>Über unsere Imkerei</h2>
+    <div>
+      <p>Seit 2022 betreiben wir unsere Imkerei mit Leidenschaft und Sorgfalt. Über das Jahr schwankt die Zahl unserer Völker – im Schnitt betreuen wir rund 10 starke Honigvölker sowie 10 kleinere Jungvölker, aus denen die nächste Generation heranwächst.</p>
+      <div class="about-facts">
+        <div class="fact"><strong>~10</strong><span>Honigvölker</span></div>
+        <div class="fact"><strong>~10</strong><span>Jungvölker</span></div>
+        <div class="fact"><strong>2022</strong><span>seit wann aktiv</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sorten" id="sorten">
+  <div class="wrap">
+    <h2>Unsere Honigsorten</h2>
+    <div class="honig-liste honig-liste-2">
+      <div class="honig">
+        <a class="honig-photo" href="#kontakt" aria-label="Zum Bestellformular springen"><img src="images/honig-hell.webp" alt="Glas Heller Frühjahrshonig, cremige Konsistenz"></a>
+        <h3>Heller Frühjahrshonig</h3>
+        <p>Frühtrachthonig – cremig und streichfähig.</p>
+        <div class="preis">6,50 € / Glas (500 g)</div>
+      </div>
+      <div class="honig">
+        <a class="honig-photo" href="#kontakt" aria-label="Zum Bestellformular springen"><img src="images/honig-dunkel.webp" alt="Glas Dunkler Sommerhonig, flüssige Konsistenz"></a>
+        <h3>Dunkler Sommerhonig</h3>
+        <p>Sommertracht – flüssig und würziger. Sollte er mit der Zeit fest werden, lässt er sich im Wasserbad bei bis zu 40 °C wieder verflüssigen.</p>
+        <div class="preis">6,50 € / Glas (500 g)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sb" id="selbstbedienung">
+  <div class="wrap sb-grid">
+    <div class="sb-text">
+      <h2>Honig rund um die Uhr</h2>
+      <p>An unserer <a href="https://maps.app.goo.gl/6FQpW7BBi8KseyZB6" target="_blank" rel="noopener">Adresse Am Schönblick 14 in Reichertshausen</a> steht ein Selbstbedienungsschrank mit frischem Honig – jederzeit zugänglich. Einfach vorbeischauen und sich bedienen. Bezahlt wird bar oder per PayPal-QR-Code direkt am Schrank.</p>
+      <p class="sb-hint">Der Schrank hängt an der Garagenwand, kurz hinter der Einfahrt (siehe Foto).</p>
+    </div>
+    <div class="sb-photos">
+      <img src="images/schrank-zufahrt.webp" alt="Zufahrt mit Pfeil zum Honig-Selbstbedienungsschrank an der Garagenwand">
+      <img src="images/schrank-offen.webp" alt="Geöffneter Selbstbedienungsschrank mit Honiggläsern, Preisschild 6,50 Euro pro Glas und Kasse">
+    </div>
+  </div>
+</section>
+
+<section class="karte" id="standorte">
+  <div class="wrap">
+    <h2>Wo unsere Bienen stehen</h2>
+    <p>Unsere Völker verteilen sich auf zwei Standorte in der Region – am Schönblick in Reichertshausen und am zweiten Bienenstand in Vieth.</p>
+    <div id="bee-map"></div>
+    <div class="karte-legende">
+      <span><span class="dot">🐝</span> Imkerei Hepper, Am Schönblick 14, Reichertshausen — 🛒 Selbstbedienungsschrank</span>
+      <span><span class="dot">🐝</span> Bienenstand, Dorfstraße 37, Vieth</span>
+    </div>
+  </div>
+</section>
+
+<section class="bewertungen" id="bewertungen">
+  <div class="wrap">
+    <h2>Was unsere Kunden sagen</h2>
+    <div class="google-badge">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.4 0-13.8 4.2-17.1 10.3z"/><path fill="#4CAF50" d="M24 44c5.4 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.5 34.9 26.9 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.9 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.5 5.5C39.9 37 44 31.4 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      <span id="google-rating-summary">Rezensionen auf Google</span>
+    </div>
+    <div class="reviews-viewport">
+      <div class="reviews-track" id="reviews-track"></div>
+    </div>
+    <p class="reviews-note">
+      <a href="https://maps.app.goo.gl/6FQpW7BBi8KseyZB6" target="_blank" rel="noopener">Alle Bewertungen auf Google ansehen</a>
+    </p>
+  </div>
+</section>
+
+<section class="kontakt" id="kontakt">
+  <div class="wrap kontakt-grid">
+    <div class="kontakt-info">
+      <h2>Kontakt &amp; Bestellung</h2>
+      <p>Schreib uns über das Formular, wie viel Honig du möchtest – wir melden uns zeitnah zur Abholung oder Lieferung zurück.</p>
+      <address class="addr">
+        <strong>Imkerei Hepper</strong>
+        Am Schönblick 14, 85293 Reichertshausen<br>
+        <a href="tel:+491632434091">+49 163 2434091</a><br>
+        <a href="mailto:imkerei.hepper@gmail.com">imkerei.hepper@gmail.com</a>
+      </address>
+      <a class="maps-btn" href="https://maps.app.goo.gl/6FQpW7BBi8KseyZB6" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 6.5 11.25 7.2 11.88a1.2 1.2 0 0 0 1.6 0C13.5 21.25 20 15.25 20 10c0-4.42-3.58-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" fill="currentColor"/></svg>
+        In Google Maps öffnen
+      </a>
+      <div class="note">
+        Honig gibt es auch direkt vor Ort rund um die Uhr aus unserem Selbstbedienungsschrank.
+      </div>
+    </div>
+
+    <form action="https://formspree.io/f/xzebvkqy" method="POST">
+      <input type="hidden" name="_subject" value="Neue Honig-Anfrage von der Website">
+      <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="field">
+        <label for="email">E-Mail</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="field">
+        <label for="sorte">Gewünschte Honigsorte</label>
+        <select id="sorte" name="sorte">
+          <option>Heller Frühjahrshonig</option>
+          <option>Dunkler Sommerhonig</option>
+          <option>Noch unentschlossen</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="menge">Menge / Anmerkungen</label>
+        <textarea id="menge" name="nachricht" placeholder="z. B. 2 Gläser Frühjahrstrachthonig, Abholung am Wochenende"></textarea>
+      </div>
+      <button type="submit" class="submit">Anfrage senden</button>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Imkerei Hepper</span>
+    <span>imkerei-hepper.de</span>
+    <span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a></span>
+  </div>
+</footer>
+
+<script>
+  var hiveIcon = L.divIcon({
+    className: '',
+    html: '<div class="hive-pin"><span class="bee-emoji">🐝</span></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 28],
+    popupAnchor: [0, -26]
+  });
+
+  // Am Schönblick hat zusätzlich den Selbstbedienungsschrank – kleines Verkaufs-Badge
+  var hiveIconShop = L.divIcon({
+    className: '',
+    html: '<div class="pin-wrapper"><div class="hive-pin"><span class="bee-emoji">🐝</span></div><div class="shop-badge">🛒</div></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 28],
+    popupAnchor: [0, -26]
+  });
+
+  var standort1 = [48.4674, 11.4955]; // Am Schönblick 14, Reichertshausen
+  var standort2 = [48.5101, 11.4394]; // Dorfstraße 37, Vieth
+
+  var map = L.map('bee-map', { scrollWheelZoom: false });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'
+  }).addTo(map);
+
+  L.marker(standort1, { icon: hiveIconShop }).addTo(map)
+    .bindPopup('<strong>Imkerei Hepper</strong><br>Am Schönblick 14<br>85293 Reichertshausen<br>🛒 Selbstbedienungsschrank vor Ort');
+
+  L.marker(standort2, { icon: hiveIcon }).addTo(map)
+    .bindPopup('<strong>Bienenstand Vieth</strong><br>Dorfstraße 37<br>85298 Vieth');
+
+  map.fitBounds([standort1, standort2], { padding: [60, 60] });
+</script>
+
+<script>
+  // ── Bewertungen ───────────────────────────────────────────────────────
+  // Hier die echten Google-Bewertungen eintragen (Text am besten kurz halten,
+  // ca. 2-4 Sätze, damit die Karten nicht zu groß werden). "date" ist einfach
+  // ein Anzeigetext wie bei Google, z. B. "vor 3 Wochen" oder "März 2026".
+  var REVIEWS = [
+    {
+      author: "Simone",
+      rating: 5,
+      date: "vor 3 Jahren",
+      text: "Sehr guter qualitativ hochwertiger Bienen-Honig! Weiter so!"
+    },
+    {
+      author: "Carmen Reicheneder",
+      rating: 5,
+      date: "vor 3 Jahren",
+      text: "Sehr guter, echter Bienenhonig wie er sein muss! Absolut zu empfehlen!"
+    },
+    {
+      author: "Julian",
+      rating: 5,
+      date: "vor 3 Jahren",
+      text: "wirklich guter und qualitativ hochwertiger Honig"
+    },
+    {
+      author: "Sandra",
+      rating: 5,
+      date: "vor 3 Jahren",
+      text: "Bester Honig - durfte den Imker schon höchstpersönlich kennen lernen. Schön, dass sich ein junger Mensch für so etwas interessiert."
+    },
+    {
+      author: "Quirin Fersch",
+      rating: 5,
+      date: "vor 3 Jahren",
+      text: "Der Honig schmeckt hervorragend 😊 Sympathischer junger Betrieb mit netten Personal! Kann man nur empfehlen. 🍯"
+    },
+    {
+      author: "Jakob R.",
+      rating: 5,
+      date: "vor 2 Jahren",
+      text: "Der Honig ist wirklich top! Ich kaufe nur noch hier."
+    }
+  ];
+
+  // Gesamtzahl der Rezensionen auf dem Google-Profil (kann höher sein als die
+  // Anzahl der hier gezeigten Karten in REVIEWS).
+  var GOOGLE_TOTAL_REVIEWS = 16;
+
+  function renderReviews() {
+    var track = document.getElementById('reviews-track');
+    var summary = document.getElementById('google-rating-summary');
+
+    if (summary && REVIEWS.length) {
+      var avg = REVIEWS.reduce(function (sum, r) { return sum + r.rating; }, 0) / REVIEWS.length;
+      summary.textContent = avg.toFixed(1) + ' ★ · ' + GOOGLE_TOTAL_REVIEWS + ' Rezensionen auf Google';
+    }
+
+    var cardsHtml = REVIEWS.map(reviewCardHtml).join('');
+    // Kartenset verdoppeln, damit die CSS-Scroll-Animation nahtlos in sich zurückläuft
+    track.innerHTML = cardsHtml + cardsHtml;
+  }
+
+  function reviewCardHtml(r) {
+    var full = Math.round(r.rating);
+    var stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    var text = (r.text || '').replace(/</g, '&lt;');
+    var name = (r.author || '').replace(/</g, '&lt;');
+    var initial = name.trim().charAt(0).toUpperCase() || '?';
+    return (
+      '<div class="review-card">' +
+        '<div class="stars">' + stars + '</div>' +
+        '<p class="text">' + text + '</p>' +
+        '<div class="author">' +
+          '<div class="avatar">' + initial + '</div>' +
+          '<div><strong>' + name + '</strong></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  renderReviews();
+</script>
+
+</body>
+</html>
